@@ -24,7 +24,7 @@ A Laravel Scout driver for [Cloudflare Vectorize](https://developers.cloudflare.
 Install the package via Composer:
 
 ```bash
-composer require your-vendor/laravel-scout-vectorize
+composer require brynj-digital/laravel-scout-vectorize
 ```
 
 Publish the configuration file:
@@ -41,7 +41,7 @@ Create a Vectorize index in your Cloudflare dashboard or via the API:
 
 ```bash
 # Using Wrangler CLI
-wrangler vectorize create my-index --dimensions=768 --metric=cosine
+npx wrangler vectorize create my-index --dimensions=768 --metric=cosine
 ```
 
 The dimensions must match your chosen embedding model:
@@ -51,7 +51,7 @@ The dimensions must match your chosen embedding model:
 
 ### Create Metadata Indexes
 
-As Laravel Scout support multiple models, we need to create metadata indexes:
+As Laravel Scout supports multiple models, we need to create metadata indexes:
 
 ```bash
 # Create metadata index for model filtering
@@ -172,7 +172,7 @@ $product->searchable();
 Product::makeAllSearchable();
 
 // Using artisan command
-php artisan scout:vectorize-import "App\Models\Product"
+php artisan scout:import "App\Models\Product"
 ```
 
 ### Removing from Index
@@ -184,11 +184,8 @@ $product->unsearchable();
 // Remove all models of a type
 Product::removeAllFromSearch();
 
-// Using artisan command (flush by model)
-php artisan scout:vectorize-flush "App\Models\Product"
-
-// Clear entire index
-php artisan scout:vectorize-clear
+// Using artisan command
+php artisan scout:flush "App\Models\Product"
 ```
 
 ### Model Observers
@@ -244,18 +241,14 @@ $embedding = $client->generateEmbedding('sample text');
 
 ## Available Commands
 
+This package uses the standard Laravel Scout commands:
+
 ```bash
 # Import all records of a model
-php artisan scout:vectorize-import "App\Models\Product"
+php artisan scout:import "App\Models\Product"
 
 # Flush all vectors for a specific model
-php artisan scout:vectorize-flush "App\Models\Product"
-
-# Clear all vectors from the index
-php artisan scout:vectorize-clear
-
-# Clear with force (skip confirmation)
-php artisan scout:vectorize-clear --force
+php artisan scout:flush "App\Models\Product"
 ```
 
 ## How It Works
@@ -301,7 +294,7 @@ return [
 
 ### Search returns no results
 
-- Ensure your models are indexed: `php artisan scout:vectorize-import "App\Models\Product"`
+- Ensure your models are indexed: `php artisan scout:import "App\Models\Product"`
 - Check your Vectorize index has vectors: Use the Cloudflare dashboard or API
 - Verify your API credentials are correct
 
@@ -337,4 +330,4 @@ This package is open-source software licensed under the [MIT license](LICENSE.md
 
 ## Support
 
-For issues, questions, or contributions, please visit the [GitHub repository](https://github.com/your-vendor/laravel-scout-vectorize).
+For issues, questions, or contributions, please visit the [GitHub repository](https://github.com/brynj-digital/laravel-scout-vectorize).
