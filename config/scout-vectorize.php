@@ -27,7 +27,7 @@ return [
     |
     */
 
-    'index' => env('VECTORIZE_INDEX', 'default'),
+    'index' => env('CLOUDFLARE_VECTORIZE_INDEX', 'default'),
 
     /*
     |--------------------------------------------------------------------------
@@ -46,6 +46,6 @@ return [
     |
     */
 
-    'embedding_model' => env('VECTORIZE_EMBEDDING_MODEL', '@cf/baai/bge-base-en-v1.5'),
+    'embedding_model' => env('CLOUDFLARE_EMBEDDING_MODEL', '@cf/baai/bge-base-en-v1.5'),
 
 ];

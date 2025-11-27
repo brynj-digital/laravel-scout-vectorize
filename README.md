@@ -58,8 +58,8 @@ SCOUT_DRIVER=vectorize
 
 CLOUDFLARE_ACCOUNT_ID=your_account_id
 CLOUDFLARE_API_TOKEN=your_api_token
-VECTORIZE_INDEX=my-index
-VECTORIZE_EMBEDDING_MODEL=@cf/baai/bge-base-en-v1.5
+CLOUDFLARE_VECTORIZE_INDEX=my-index
+CLOUDFLARE_EMBEDDING_MODEL=@cf/baai/bge-base-en-v1.5
 ```
 
 ### 3. Scout Configuration
@@ -277,9 +277,9 @@ return [
         'api_token' => env('CLOUDFLARE_API_TOKEN'),
     ],
 
-    'index' => env('VECTORIZE_INDEX', 'default'),
+    'index' => env('CLOUDFLARE_VECTORIZE_INDEX', 'default'),
 
-    'embedding_model' => env('VECTORIZE_EMBEDDING_MODEL', '@cf/baai/bge-base-en-v1.5'),
+    'embedding_model' => env('CLOUDFLARE_EMBEDDING_MODEL', '@cf/baai/bge-base-en-v1.5'),
 ];
 ```
 
