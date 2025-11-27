@@ -49,6 +49,20 @@ The dimensions must match your chosen embedding model:
 - `@cf/baai/bge-base-en-v1.5`: 768 dimensions (default)
 - `@cf/baai/bge-large-en-v1.5`: 1024 dimensions
 
+### Create Metadata Indexes
+
+As Laravel Scout support multiple models, we need to create metadata indexes:
+
+```bash
+# Create metadata index for model filtering
+npx wrangler vectorize create-metadata-index my-index --property-name=model --type=string
+
+# Create metadata index for key filtering
+npx wrangler vectorize create-metadata-index my-index --property-name=key --type=number
+```
+
+These indexes allow for more efficient metadata-based filtering when searching across multiple models or when you need to filter by specific record keys.
+
 ### 2. Environment Variables
 
 Add the following to your `.env` file:

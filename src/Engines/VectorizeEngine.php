@@ -177,7 +177,7 @@ class VectorizeEngine extends Engine
             // Extract the original model key from our prefixed ID
             // Format: "App_Models_Product_123" -> "123"
             $metadata = $result['metadata'] ?? [];
-            return $metadata['key'] ?? null;
+            return isset($metadata['key']) ? (int) $metadata['key'] : null;
         })->filter()->values();
     }
 
