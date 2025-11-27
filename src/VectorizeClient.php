@@ -129,7 +129,7 @@ class VectorizeClient
             $payload = [
                 'vector' => $queryVector,
                 'topK' => $topK,
-                'returnMetadata' => 'indexed',
+                'returnMetadata' => 'all',
             ];
 
             if ($filter !== null && !empty($filter)) {
