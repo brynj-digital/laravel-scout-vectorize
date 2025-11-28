@@ -1,4 +1,4 @@
-# Laravel Scout Vectorize Driver
+# Cloudflare Vectorize Driver for Laravel Scout
 
 A Laravel Scout driver for [Cloudflare Vectorize](https://developers.cloudflare.com/vectorize/), enabling semantic search using vector embeddings in your Laravel applications.
 
