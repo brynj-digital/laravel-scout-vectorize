@@ -33,13 +33,19 @@ class VectorizeEngine extends Engine
             // Convert searchable array to text for embedding
             $text = $this->convertToSearchableText($model, $searchableData);
 
+            // Prepare metadata - include all searchable data plus required fields
+            $metadata = array_merge(
+                $searchableData,
+                [
+                    'model' => get_class($model),
+                    'key' => $model->getScoutKey(),
+                ]
+            );
+
             return [
                 'id' => $this->getScoutKey($model),
                 'text' => $text,
-                'metadata' => [
-                    'model' => get_class($model),
-                    'key' => $model->getScoutKey(),
-                ],
+                'metadata' => $metadata,
             ];
         })->filter()->values()->all();
 
