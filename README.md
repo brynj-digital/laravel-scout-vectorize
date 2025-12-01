@@ -110,7 +110,38 @@ Product::search('laptop')
 
 This means you can search semantically while also applying exact-match filters.
 
-### 2. Environment Variables
+### 2. Create API Token
+
+You'll need a Cloudflare API token with Vectorize permissions to allow Laravel to interact with your Vectorize index.
+
+#### Create the token in Cloudflare Dashboard:
+
+1. Log in to your [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. Navigate to **My Profile** (click your user icon in the top right)
+3. Select **API Tokens** from the left sidebar
+4. Click **Create Token**
+5. Choose **Create Custom Token**
+6. Configure your token:
+   - **Token name**: Give it a descriptive name (e.g., "Laravel Scout Vectorize")
+   - **Permissions**: Add the following two permissions:
+     - Account → **Vectorize** → **Read**
+     - Account → **Vectorize** → **Write**
+   - **Account Resources**: Select your specific account (or "All accounts" if needed)
+   - **TTL**: Set an expiration date or leave as default
+7. Click **Continue to summary**
+8. Review the permissions and click **Create Token**
+9. **Important**: Copy the token immediately - it will only be shown once
+10. Store the token securely (you'll add it to your `.env` file in the next step)
+
+#### Token Permissions Summary
+
+Your token must have these permissions:
+- ✅ **Vectorize Read** - Allows reading from your Vectorize indexes
+- ✅ **Vectorize Write** - Allows creating, updating, and deleting vectors
+
+**Security Note**: Avoid using tokens with broader permissions (like "Account Settings: Read" or "Workers: Edit") unless absolutely necessary.
+
+### 3. Environment Variables
 
 Add the following to your `.env` file:
 
@@ -123,7 +154,7 @@ CLOUDFLARE_VECTORIZE_INDEX=my-index
 CLOUDFLARE_EMBEDDING_MODEL=@cf/baai/bge-base-en-v1.5
 ```
 
-### 3. Scout Configuration
+### 4. Scout Configuration
 
 Ensure Scout is configured in `config/scout.php`:
 
