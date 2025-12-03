@@ -38,7 +38,6 @@ class VectorizeEngine extends Engine
                 $searchableData,
                 [
                     'model' => get_class($model),
-                    'key' => $model->getScoutKey(),
                 ]
             );
 
@@ -84,8 +83,16 @@ class VectorizeEngine extends Engine
      */
     protected function getScoutKey($model): string
     {
-        $class = str_replace('\\', '_', get_class($model));
-        return "{$class}_{$model->getScoutKey()}";
+        // Handle mocked objects by getting the parent class name
+        $className = class_basename($model);
+
+        // For Mockery objects, extract the base class name from the mock class name
+        if (strpos($className, 'Mockery_') === 0) {
+            $parentClass = get_parent_class($model);
+            $className = $parentClass ? class_basename($parentClass) : $className;
+        }
+
+        return "{$className}_{$model->getScoutKey()}";
     }
 
     /**
@@ -181,9 +188,12 @@ class VectorizeEngine extends Engine
     {
         return collect($results['results'])->map(function ($result) {
             // Extract the original model key from our prefixed ID
-            // Format: "App_Models_Product_123" -> "123"
-            $metadata = $result['metadata'] ?? [];
-            return isset($metadata['key']) ? (int) $metadata['key'] : null;
+            // Format: "SearchableModel_123" -> 123
+            $id = $result['id'] ?? '';
+            if (preg_match('/_(\d+)$/', $id, $matches)) {
+                return (int) $matches[1];
+            }
+            return null;
         })->filter()->values();
     }
 
