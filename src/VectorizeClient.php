@@ -22,7 +22,7 @@ class VectorizeClient
             'connect_timeout' => 10,
         ]);
 
-        $this->baseUrl = "https://api.cloudflare.com/client/v4/accounts/{$this->accountId}/vectorize/v2/indexes/{$this->indexName}";
+        $this->baseUrl = "https://api.cloudflare.com/client/v4/accounts/{$this->accountId}/vectorize/v2/indexes";
         $this->aiUrl = "https://api.cloudflare.com/client/v4/accounts/{$this->accountId}/ai/run/{$this->embeddingModel}";
     }
 
@@ -64,7 +64,7 @@ class VectorizeClient
     public function insertVectors(array $vectors): array
     {
         try {
-            $response = $this->client->post("{$this->baseUrl}/insert", [
+            $response = $this->client->post("{$this->baseUrl}/{$this->indexName}/insert", [
                 'headers' => [
                     'Authorization' => "Bearer {$this->apiToken}",
                     'Content-Type' => 'application/json',
@@ -136,7 +136,7 @@ class VectorizeClient
                 $payload['filter'] = $filter;
             }
 
-            $response = $this->client->post("{$this->baseUrl}/query", [
+            $response = $this->client->post("{$this->baseUrl}/{$this->indexName}/query", [
                 'headers' => [
                     'Authorization' => "Bearer {$this->apiToken}",
                     'Content-Type' => 'application/json',
@@ -182,7 +182,7 @@ class VectorizeClient
     public function deleteVectors(array $ids): array
     {
         try {
-            $response = $this->client->post("{$this->baseUrl}/delete_by_ids", [
+            $response = $this->client->post("{$this->baseUrl}/{$this->indexName}/delete_by_ids", [
                 'headers' => [
                     'Authorization' => "Bearer {$this->apiToken}",
                     'Content-Type' => 'application/json',
@@ -209,7 +209,7 @@ class VectorizeClient
     public function getIndexInfo(): array
     {
         try {
-            $response = $this->client->get($this->baseUrl, [
+            $response = $this->client->get("{$this->baseUrl}/{$this->indexName}", [
                 'headers' => [
                     'Authorization' => "Bearer {$this->apiToken}",
                 ],
@@ -247,7 +247,7 @@ class VectorizeClient
     public function deleteIndex(): array
     {
         try {
-            $url = "https://api.cloudflare.com/client/v4/accounts/{$this->accountId}/vectorize/indexes/{$this->indexName}";
+            $url = "{$this->baseUrl}/{$this->indexName}";
 
             $response = $this->client->delete($url, [
                 'headers' => [
@@ -273,7 +273,7 @@ class VectorizeClient
     public function indexExists(): bool
     {
         try {
-            $url = "https://api.cloudflare.com/client/v4/accounts/{$this->accountId}/vectorize/indexes/{$this->indexName}";
+            $url = "{$this->baseUrl}/{$this->indexName}";
 
             $response = $this->client->get($url, [
                 'headers' => [
@@ -294,26 +294,24 @@ class VectorizeClient
     /**
      * Create a new Vectorize index.
      */
-    public static function createIndex(string $accountId, string $apiToken, string $name, int $dimensions, string $metric): array
+    public function createIndex(string $name, int $dimensions, string $metric): array
     {
-        $client = new Client([
-            'timeout' => 30,
-            'connect_timeout' => 10,
-        ]);
-
-        $url = "https://api.cloudflare.com/client/v4/accounts/{$accountId}/vectorize/indexes";
-
         try {
-            $response = $client->post($url, [
-                'headers' => [
-                    'Authorization' => "Bearer {$apiToken}",
-                    'Content-Type' => 'application/json',
-                ],
-                'json' => [
-                    'name' => $name,
+            $payload = [
+                'name' => $name,
+                'description' => "Vector index for {$name} with dimensions {$dimensions}",
+                'config' => [
                     'dimensions' => $dimensions,
                     'metric' => $metric,
                 ],
+            ];
+
+            $response = $this->client->post($this->baseUrl, [
+                'headers' => [
+                    'Authorization' => "Bearer {$this->apiToken}",
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => $payload,
             ]);
 
             $result = json_decode($response->getBody()->getContents(), true);

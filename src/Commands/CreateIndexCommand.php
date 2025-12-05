@@ -78,7 +78,8 @@ class CreateIndexCommand extends Command
                 return Command::FAILURE;
             }
 
-            $result = VectorizeClient::createIndex($accountId, $apiToken, $name, $dimensions, $metric);
+            $client = new VectorizeClient($accountId, $apiToken, $name);
+            $result = $client->createIndex($name, $dimensions, $metric);
 
             if (isset($result['success']) && $result['success']) {
                 $this->info("✅ Successfully created Vectorize index '{$name}'");
