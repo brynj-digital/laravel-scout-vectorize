@@ -22,7 +22,7 @@ class VectorizeClient
             'connect_timeout' => 10,
         ]);
 
-        $this->baseUrl = "https://api.cloudflare.com/client/v4/accounts/{$this->accountId}/vectorize/v2/indexes/{$this->indexName}";
+        $this->baseUrl = "https://api.cloudflare.com/client/v4/accounts/{$this->accountId}/vectorize/v2/indexes";
         $this->aiUrl = "https://api.cloudflare.com/client/v4/accounts/{$this->accountId}/ai/run/{$this->embeddingModel}";
     }
 
@@ -64,7 +64,7 @@ class VectorizeClient
     public function insertVectors(array $vectors): array
     {
         try {
-            $response = $this->client->post("{$this->baseUrl}/insert", [
+            $response = $this->client->post("{$this->baseUrl}/{$this->indexName}/insert", [
                 'headers' => [
                     'Authorization' => "Bearer {$this->apiToken}",
                     'Content-Type' => 'application/json',
@@ -136,7 +136,7 @@ class VectorizeClient
                 $payload['filter'] = $filter;
             }
 
-            $response = $this->client->post("{$this->baseUrl}/query", [
+            $response = $this->client->post("{$this->baseUrl}/{$this->indexName}/query", [
                 'headers' => [
                     'Authorization' => "Bearer {$this->apiToken}",
                     'Content-Type' => 'application/json',
@@ -182,7 +182,7 @@ class VectorizeClient
     public function deleteVectors(array $ids): array
     {
         try {
-            $response = $this->client->post("{$this->baseUrl}/delete_by_ids", [
+            $response = $this->client->post("{$this->baseUrl}/{$this->indexName}/delete_by_ids", [
                 'headers' => [
                     'Authorization' => "Bearer {$this->apiToken}",
                     'Content-Type' => 'application/json',
@@ -209,7 +209,7 @@ class VectorizeClient
     public function getIndexInfo(): array
     {
         try {
-            $response = $this->client->get($this->baseUrl, [
+            $response = $this->client->get("{$this->baseUrl}/{$this->indexName}", [
                 'headers' => [
                     'Authorization' => "Bearer {$this->apiToken}",
                 ],
@@ -239,5 +239,91 @@ class VectorizeClient
     public function getIndexName(): string
     {
         return $this->indexName;
+    }
+
+    /**
+     * Delete the entire Vectorize index.
+     */
+    public function deleteIndex(): array
+    {
+        try {
+            $url = "{$this->baseUrl}/{$this->indexName}";
+
+            $response = $this->client->delete($url, [
+                'headers' => [
+                    'Authorization' => "Bearer {$this->apiToken}",
+                    'Content-Type' => 'application/json',
+                ],
+            ]);
+
+            $result = json_decode($response->getBody()->getContents(), true);
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Vectorize: Error deleting index', [
+                'error' => $e->getMessage(),
+                'index_name' => $this->indexName,
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Check if the index exists.
+     */
+    public function indexExists(): bool
+    {
+        try {
+            $url = "{$this->baseUrl}/{$this->indexName}";
+
+            $response = $this->client->get($url, [
+                'headers' => [
+                    'Authorization' => "Bearer {$this->apiToken}",
+                ],
+            ]);
+
+            $result = json_decode($response->getBody()->getContents(), true);
+            return isset($result['success']) && $result['success'];
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            if ($e->getResponse()->getStatusCode() === 404) {
+                return false; // Index doesn't exist
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * Create a new Vectorize index.
+     */
+    public function createIndex(string $name, int $dimensions, string $metric): array
+    {
+        try {
+            $payload = [
+                'name' => $name,
+                'description' => "Vector index for {$name} with dimensions {$dimensions}",
+                'config' => [
+                    'dimensions' => $dimensions,
+                    'metric' => $metric,
+                ],
+            ];
+
+            $response = $this->client->post($this->baseUrl, [
+                'headers' => [
+                    'Authorization' => "Bearer {$this->apiToken}",
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => $payload,
+            ]);
+
+            $result = json_decode($response->getBody()->getContents(), true);
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Vectorize: Error creating index', [
+                'error' => $e->getMessage(),
+                'index_name' => $name,
+                'dimensions' => $dimensions,
+                'metric' => $metric,
+            ]);
+            throw $e;
+        }
     }
 }

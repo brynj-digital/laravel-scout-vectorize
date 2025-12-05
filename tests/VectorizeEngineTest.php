@@ -52,15 +52,14 @@ class VectorizeEngineTest extends TestCase
                 $this->assertCount(2, $documents);
 
                 // Check first document
-                $this->assertStringContainsString('_1', $documents[0]['id']);
+                $this->assertEquals('SearchableModel_1', $documents[0]['id']);
                 $this->assertEquals('Test Title. Test Content', $documents[0]['text']);
                 $this->assertEquals('Test Title', $documents[0]['metadata']['title']);
                 $this->assertEquals('Test Content', $documents[0]['metadata']['content']);
                 $this->assertStringContainsString('SearchableModel', $documents[0]['metadata']['model']);
-                $this->assertEquals(1, $documents[0]['metadata']['key']);
 
                 // Check second document
-                $this->assertStringContainsString('_2', $documents[1]['id']);
+                $this->assertEquals('SearchableModel_2', $documents[1]['id']);
                 $this->assertEquals('Another Title. More Content', $documents[1]['text']);
 
                 return true;
@@ -117,8 +116,8 @@ class VectorizeEngineTest extends TestCase
             ->once()
             ->with(Mockery::on(function ($documents) {
                 $this->assertCount(2, $documents);
-                $this->assertStringContainsString('_1', $documents[0]['id']);
-                $this->assertStringContainsString('_3', $documents[1]['id']);
+                $this->assertEquals('SearchableModel_1', $documents[0]['id']);
+                $this->assertEquals('SearchableModel_3', $documents[1]['id']);
                 return true;
             }));
 
@@ -167,8 +166,8 @@ class VectorizeEngineTest extends TestCase
             ->once()
             ->with(Mockery::on(function ($ids) {
                 $this->assertCount(2, $ids);
-                $this->assertStringContainsString('_1', $ids[0]);
-                $this->assertStringContainsString('_2', $ids[1]);
+                $this->assertEquals('SearchableModel_1', $ids[0]);
+                $this->assertEquals('SearchableModel_2', $ids[1]);
                 return true;
             }));
 
@@ -183,7 +182,7 @@ class VectorizeEngineTest extends TestCase
             ->once()
             ->with('test query', 10, ['model' => SearchableModel::class])
             ->andReturn([
-                ['id' => 'ScoutVectorize_Tests_SearchableModel_1', 'score' => 0.95, 'metadata' => ['key' => 1]],
+                ['id' => 'SearchableModel_1', 'score' => 0.95, 'metadata' => []],
             ]);
 
         $results = $this->engine->search($builder);
@@ -280,9 +279,9 @@ class VectorizeEngineTest extends TestCase
     {
         $results = [
             'results' => [
-                ['id' => 'ScoutVectorize_Tests_SearchableModel_1', 'metadata' => ['key' => 1]],
-                ['id' => 'ScoutVectorize_Tests_SearchableModel_2', 'metadata' => ['key' => 2]],
-                ['id' => 'ScoutVectorize_Tests_SearchableModel_3', 'metadata' => ['key' => 3]],
+                ['id' => 'SearchableModel_1', 'metadata' => []],
+                ['id' => 'SearchableModel_2', 'metadata' => []],
+                ['id' => 'SearchableModel_3', 'metadata' => []],
             ],
         ];
 
@@ -295,15 +294,34 @@ class VectorizeEngineTest extends TestCase
     {
         $results = [
             'results' => [
-                ['id' => 'ScoutVectorize_Tests_SearchableModel_1', 'metadata' => ['key' => 1]],
-                ['id' => 'ScoutVectorize_Tests_SearchableModel_2', 'metadata' => []],
-                ['id' => 'ScoutVectorize_Tests_SearchableModel_3', 'metadata' => ['key' => 3]],
+                ['id' => 'SearchableModel_1', 'metadata' => []],
+                ['id' => 'SearchableModel_invalid_id', 'metadata' => []], // Invalid ID format
+                ['id' => 'SearchableModel_3', 'metadata' => []],
             ],
         ];
 
         $ids = $this->engine->mapIds($results);
 
         $this->assertEquals([1, 3], $ids->all());
+    }
+
+    public function test_map_ids_parsing_various_formats(): void
+    {
+        $results = [
+            'results' => [
+                ['id' => 'Product_123', 'metadata' => []],
+                ['id' => 'User_456', 'metadata' => []],
+                ['id' => 'ComplexModel_789', 'metadata' => []],
+                ['id' => 'SingleWord_999', 'metadata' => []],
+                ['id' => 'ModelWith_NoNumber', 'metadata' => []], // Should be filtered out
+                ['id' => '', 'metadata' => []], // Empty ID should be filtered out
+                ['id' => 'NoUnderscore123', 'metadata' => []], // Should be filtered out
+            ],
+        ];
+
+        $ids = $this->engine->mapIds($results);
+
+        $this->assertEquals([123, 456, 789, 999], $ids->all());
     }
 
     public function test_map(): void
@@ -313,8 +331,8 @@ class VectorizeEngineTest extends TestCase
 
         $results = [
             'results' => [
-                ['id' => 'ScoutVectorize_Tests_SearchableModel_2', 'metadata' => ['key' => 2]],
-                ['id' => 'ScoutVectorize_Tests_SearchableModel_1', 'metadata' => ['key' => 1]],
+                ['id' => 'SearchableModel_2', 'metadata' => []],
+                ['id' => 'SearchableModel_1', 'metadata' => []],
             ],
         ];
 
@@ -377,8 +395,8 @@ class VectorizeEngineTest extends TestCase
             ->andReturn([
                 'result' => [
                     'matches' => [
-                        ['id' => 'ScoutVectorize_Tests_SearchableModel_1'],
-                        ['id' => 'ScoutVectorize_Tests_SearchableModel_2'],
+                        ['id' => 'SearchableModel_1'],
+                        ['id' => 'SearchableModel_2'],
                     ],
                 ],
             ]);
@@ -386,8 +404,8 @@ class VectorizeEngineTest extends TestCase
         $this->client->shouldReceive('deleteVectors')
             ->once()
             ->with([
-                'ScoutVectorize_Tests_SearchableModel_1',
-                'ScoutVectorize_Tests_SearchableModel_2',
+                'SearchableModel_1',
+                'SearchableModel_2',
             ]);
 
         $this->client->shouldReceive('queryVectors')

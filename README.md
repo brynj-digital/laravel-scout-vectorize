@@ -51,15 +51,14 @@ The dimensions must match your chosen embedding model:
 
 ### Create Metadata Indexes
 
-Create metadata indexes to enable efficient filtering. The `model` and `key` indexes are **required** for the driver to function correctly:
+Create metadata indexes to enable efficient filtering. The `model` index is **required** for the driver to function correctly:
 
 ```bash
 # Required: Create metadata index for model filtering
 npx wrangler vectorize create-metadata-index my-index --property-name=model --type=string
-
-# Required: Create metadata index for key filtering
-npx wrangler vectorize create-metadata-index my-index --property-name=key --type=number
 ```
+
+**Note**: Recent versions of this package no longer require a `key` metadata index, as model keys are now extracted directly from the vector ID format. This provides cleaner metadata and reduced storage requirements.
 
 #### Optional: Additional Metadata Indexes for `where()` Clauses
 
@@ -505,7 +504,35 @@ This will queue all indexing operations, preventing API rate limits and improvin
 
 ## Available Commands
 
-This package uses the standard Laravel Scout commands:
+This package provides custom commands for managing Vectorize indexes, plus the standard Laravel Scout commands:
+
+### Vectorize Index Management
+
+```bash
+# Create a new Vectorize index
+php artisan vectorize:create-index
+
+# Create index with custom dimensions and metric
+php artisan vectorize:create-index my-index --dimensions=1024 --metric=euclidean --embedding-model=@cf/baai/bge-large-en-v1.5
+
+# Drop (delete) a Vectorize index
+php artisan vectorize:drop-index my-index
+
+# Force drop without confirmation (use with caution)
+php artisan vectorize:drop-index my-index --force
+```
+
+**Options for `vectorize:create-index`:**
+- `name` (optional): Index name (uses config value if not provided)
+- `--dimensions`: Vector dimensions (default: 768)
+- `--metric`: Distance metric - cosine, euclidean, or dotproduct (default: cosine)
+- `--embedding-model`: Cloudflare embedding model (default: @cf/baai/bge-base-en-v1.5)
+
+**Options for `vectorize:drop-index`:**
+- `name` (optional): Index name (uses config value if not provided)
+- `--force`: Skip confirmation prompts
+
+### Standard Scout Commands
 
 ```bash
 # Import all records of a model
@@ -622,7 +649,7 @@ This package uses Cloudflare Workers AI to generate embeddings:
 
 1. **Text Preparation**: Your model data is converted to text using `toSearchableText()` or by flattening `toSearchableArray()`
 2. **Embedding Generation**: The text is sent to Cloudflare Workers AI which returns a vector (array of floats)
-3. **Vector Storage**: The vector is stored in Vectorize along with metadata (model class, key, and searchable data)
+3. **Vector Storage**: The vector is stored in Vectorize along with metadata (model class and searchable data)
 4. **Semantic Search**: When you search, your query is also converted to a vector and compared against stored vectors using cosine similarity
 
 ### Supported Embedding Models
