@@ -140,7 +140,7 @@ Product::search('laptop')
 
 This means you can search semantically while also applying exact-match filters.
 
-### 2. Create API Token
+### 3. Create API Token
 
 You'll need a Cloudflare API token with Vectorize permissions to allow Laravel to interact with your Vectorize index.
 
@@ -171,7 +171,7 @@ Your token must have these permissions:
 
 **Security Note**: Avoid using tokens with broader permissions (like "Account Settings: Read" or "Workers: Edit") unless absolutely necessary.
 
-### 3. Environment Variables
+### 4. Environment Variables
 
 Add the following to your `.env` file:
 
@@ -184,7 +184,7 @@ CLOUDFLARE_VECTORIZE_INDEX=my-index
 CLOUDFLARE_EMBEDDING_MODEL=@cf/baai/bge-base-en-v1.5
 ```
 
-### 4. Scout Configuration
+### 5. Scout Configuration
 
 Ensure Scout is configured in `config/scout.php`:
 
@@ -535,7 +535,7 @@ This will queue all indexing operations, preventing API rate limits and improvin
 
 ## Available Commands
 
-This package provides custom commands for managing Vectorize indexes, plus the standard Laravel Scout commands:
+This package provides custom commands for managing Vectorize indexes and metadata indexes, plus the standard Laravel Scout commands:
 
 ### Vectorize Index Management
 
@@ -562,6 +562,33 @@ php artisan vectorize:drop-index my-index --force
 **Options for `vectorize:drop-index`:**
 - `name` (optional): Index name (uses config value if not provided)
 - `--force`: Skip confirmation prompts
+
+### Metadata Index Management
+
+```bash
+# Create a metadata index for filtering
+php artisan vectorize:create-metadata-index property-name type --index-name=my-index
+
+# List all metadata indexes
+php artisan vectorize:list-metadata-indexes --index-name=my-index
+
+# Delete a metadata index
+php artisan vectorize:delete-metadata-index property-name --index-name=my-index
+
+# Force delete without confirmation
+php artisan vectorize:delete-metadata-index property-name --index-name=my-index --force
+```
+
+**Arguments for `vectorize:create-metadata-index`:**
+- `property-name`: The metadata property to index
+- `type`: Property type (string, number, boolean)
+
+**Arguments for `vectorize:delete-metadata-index`:**
+- `property-name`: The metadata property to delete
+
+**Options for metadata index commands:**
+- `--index-name`: Vectorize index name (uses config value if not provided)
+- `--force`: Skip confirmation prompts (delete command only)
 
 ### Standard Scout Commands
 

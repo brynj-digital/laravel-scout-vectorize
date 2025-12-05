@@ -72,7 +72,9 @@ class CreateMetadataIndexCommand extends Command
             $existingIndexesResult = $client->listMetadataIndexes($indexName);
 
             if (isset($existingIndexesResult['success']) && $existingIndexesResult['success']) {
-                $existingIndexes = $existingIndexesResult['result']['metadata_indexes'] ?? [];
+                $existingIndexes = isset($existingIndexesResult['result']['metadata_indexes'])
+                    ? $existingIndexesResult['result']['metadata_indexes']
+                    : [];
 
                 // Check for 10-property limit
                 if (count($existingIndexes) >= 10) {
@@ -83,7 +85,7 @@ class CreateMetadataIndexCommand extends Command
 
                 // Check for duplicates
                 foreach ($existingIndexes as $index) {
-                    if (($index['property_name'] ?? '') === $propertyName) {
+                    if ((isset($index['property_name']) ? $index['property_name'] : '') === $propertyName) {
                         $this->error("Metadata index for property '{$propertyName}' already exists.");
                         $this->info('Use "php artisan vectorize:list-metadata-indexes" to see all existing metadata indexes.');
                         return Command::FAILURE;
@@ -120,7 +122,8 @@ class CreateMetadataIndexCommand extends Command
                 $this->error('Failed to create metadata index');
                 if (isset($result['errors'])) {
                     foreach ($result['errors'] as $error) {
-                        $this->line("  - {$error['message'] ?? $error}");
+                        $errorMessage = is_array($error) ? ($error['message'] ?? 'Unknown error') : $error;
+                        $this->line("  - {$errorMessage}");
                     }
                 }
                 return Command::FAILURE;

@@ -59,11 +59,13 @@ class DeleteMetadataIndexCommand extends Command
             $existingIndexesResult = $client->listMetadataIndexes($indexName);
 
             if (isset($existingIndexesResult['success']) && $existingIndexesResult['success']) {
-                $existingIndexes = $existingIndexesResult['result']['metadata_indexes'] ?? [];
+                $existingIndexes = isset($existingIndexesResult['result']['metadata_indexes'])
+                    ? $existingIndexesResult['result']['metadata_indexes']
+                    : [];
                 $targetIndex = null;
 
                 foreach ($existingIndexes as $index) {
-                    if (($index['property_name'] ?? '') === $propertyName) {
+                    if ((isset($index['property_name']) ? $index['property_name'] : '') === $propertyName) {
                         $targetIndex = $index;
                         break;
                     }
@@ -76,9 +78,9 @@ class DeleteMetadataIndexCommand extends Command
                 }
 
                 $this->info("Found metadata index:");
-                $this->line("  Property: {$targetIndex['property_name']}");
-                $this->line("  Type: {$targetIndex['type']}");
-                $this->line("  Created: " . ($targetIndex['created_at'] ?? 'Unknown'));
+                $this->line("  Property: " . (isset($targetIndex['property_name']) ? $targetIndex['property_name'] : 'Unknown'));
+                $this->line("  Type: " . (isset($targetIndex['type']) ? $targetIndex['type'] : 'Unknown'));
+                $this->line("  Created: " . (isset($targetIndex['created_at']) ? $targetIndex['created_at'] : 'Unknown'));
             } else {
                 $this->error('Failed to check existing metadata indexes');
                 return Command::FAILURE;
@@ -127,7 +129,8 @@ class DeleteMetadataIndexCommand extends Command
                 $this->error('Failed to delete metadata index');
                 if (isset($result['errors'])) {
                     foreach ($result['errors'] as $error) {
-                        $this->line("  - {$error['message'] ?? $error}");
+                        $errorMessage = is_array($error) ? ($error['message'] ?? 'Unknown error') : $error;
+                        $this->line("  - {$errorMessage}");
                     }
                 }
                 return Command::FAILURE;
