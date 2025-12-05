@@ -337,8 +337,8 @@ class VectorizeClient
             $url = "{$this->baseUrl}/{$targetIndex}/metadata_index/create";
 
             $payload = [
-                'property_name' => $propertyName,
-                'type' => $type,
+                'propertyName' => $propertyName,
+                'indexType' => $type,
             ];
 
             $response = $this->client->post($url, [
@@ -372,7 +372,7 @@ class VectorizeClient
             $url = "{$this->baseUrl}/{$targetIndex}/metadata_index/delete";
 
             $payload = [
-                'property_name' => $propertyName,
+                'propertyName' => $propertyName,
             ];
 
             $response = $this->client->post($url, [
