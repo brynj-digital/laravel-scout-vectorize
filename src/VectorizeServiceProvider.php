@@ -5,6 +5,8 @@ namespace ScoutVectorize;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Scout\EngineManager;
 use ScoutVectorize\Engines\VectorizeEngine;
+use ScoutVectorize\Commands\CreateIndexCommand;
+use ScoutVectorize\Commands\DropIndexCommand;
 
 class VectorizeServiceProvider extends ServiceProvider
 {
@@ -37,6 +39,14 @@ class VectorizeServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../config/scout-vectorize.php' => config_path('scout-vectorize.php'),
         ], 'scout-vectorize-config');
+
+        // Register console commands
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                CreateIndexCommand::class,
+                DropIndexCommand::class,
+            ]);
+        }
 
         // Extend Scout with Vectorize engine
         resolve(EngineManager::class)->extend('vectorize', function () {
