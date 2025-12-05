@@ -7,6 +7,9 @@ use Laravel\Scout\EngineManager;
 use ScoutVectorize\Engines\VectorizeEngine;
 use ScoutVectorize\Commands\CreateIndexCommand;
 use ScoutVectorize\Commands\DropIndexCommand;
+use ScoutVectorize\Commands\CreateMetadataIndexCommand;
+use ScoutVectorize\Commands\DeleteMetadataIndexCommand;
+use ScoutVectorize\Commands\ListMetadataIndexesCommand;
 
 class VectorizeServiceProvider extends ServiceProvider
 {
@@ -45,6 +48,9 @@ class VectorizeServiceProvider extends ServiceProvider
             $this->commands([
                 CreateIndexCommand::class,
                 DropIndexCommand::class,
+                CreateMetadataIndexCommand::class,
+                DeleteMetadataIndexCommand::class,
+                ListMetadataIndexesCommand::class,
             ]);
         }
 

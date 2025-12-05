@@ -37,10 +37,18 @@ php artisan vendor:publish --tag=scout-vectorize-config
 
 ### 1. Create a Vectorize Index
 
-Create a Vectorize index in your Cloudflare dashboard or via the API:
+Use the provided artisan command to create a Vectorize index:
 
 ```bash
-# Using Wrangler CLI
+# Recommended: Using artisan command
+php artisan vectorize:create-index my-index
+
+# Or with custom dimensions and metric
+php artisan vectorize:create-index my-index --dimensions=1024 --metric=euclidean --embedding-model=@cf/baai/bge-large-en-v1.5
+```
+
+**Alternative**: Using Wrangler CLI
+```bash
 npx wrangler vectorize create my-index --dimensions=768 --metric=cosine
 ```
 
@@ -49,13 +57,13 @@ The dimensions must match your chosen embedding model:
 - `@cf/baai/bge-base-en-v1.5`: 768 dimensions (default)
 - `@cf/baai/bge-large-en-v1.5`: 1024 dimensions
 
-### Create Metadata Indexes
+### 2. Create Metadata Indexes
 
-Create metadata indexes to enable efficient filtering. The `model` index is **required** for the driver to function correctly:
+Create metadata indexes to enable efficient filtering using the artisan commands:
 
 ```bash
 # Required: Create metadata index for model filtering
-npx wrangler vectorize create-metadata-index my-index --property-name=model --type=string
+php artisan vectorize:create-metadata-index model string --index-name=my-index
 ```
 
 **Note**: Recent versions of this package no longer require a `key` metadata index, as model keys are now extracted directly from the vector ID format. This provides cleaner metadata and reduced storage requirements.
@@ -66,13 +74,36 @@ You can create additional metadata indexes for any custom fields you want to fil
 
 ```bash
 # Example: Create index for filtering by status
-npx wrangler vectorize create-metadata-index my-index --property-name=status --type=string
+php artisan vectorize:create-metadata-index status string --index-name=my-index
 
 # Example: Create index for filtering by category_id
-npx wrangler vectorize create-metadata-index my-index --property-name=category_id --type=number
+php artisan vectorize:create-metadata-index category_id number --index-name=my-index
 
 # Example: Create index for boolean fields
+php artisan vectorize:create-metadata-index in_stock boolean --index-name=my-index
+```
+
+**Alternative**: Using Wrangler CLI
+```bash
+# Required: Create metadata index for model filtering
+npx wrangler vectorize create-metadata-index my-index --property-name=model --type=string
+
+# Optional: Additional metadata indexes
+npx wrangler vectorize create-metadata-index my-index --property-name=status --type=string
+npx wrangler vectorize create-metadata-index my-index --property-name=category_id --type=number
 npx wrangler vectorize create-metadata-index my-index --property-name=in_stock --type=boolean
+```
+
+#### Managing Metadata Indexes
+
+Use the provided commands to manage your metadata indexes:
+
+```bash
+# List all metadata indexes for an index
+php artisan vectorize:list-metadata-indexes --index-name=my-index
+
+# Delete a metadata index
+php artisan vectorize:delete-metadata-index status --index-name=my-index
 ```
 
 To use these filters, include the fields in your model's `toSearchableArray()`:
@@ -109,7 +140,7 @@ Product::search('laptop')
 
 This means you can search semantically while also applying exact-match filters.
 
-### 2. Create API Token
+### 3. Create API Token
 
 You'll need a Cloudflare API token with Vectorize permissions to allow Laravel to interact with your Vectorize index.
 
@@ -140,7 +171,7 @@ Your token must have these permissions:
 
 **Security Note**: Avoid using tokens with broader permissions (like "Account Settings: Read" or "Workers: Edit") unless absolutely necessary.
 
-### 3. Environment Variables
+### 4. Environment Variables
 
 Add the following to your `.env` file:
 
@@ -153,7 +184,7 @@ CLOUDFLARE_VECTORIZE_INDEX=my-index
 CLOUDFLARE_EMBEDDING_MODEL=@cf/baai/bge-base-en-v1.5
 ```
 
-### 4. Scout Configuration
+### 5. Scout Configuration
 
 Ensure Scout is configured in `config/scout.php`:
 
@@ -504,7 +535,7 @@ This will queue all indexing operations, preventing API rate limits and improvin
 
 ## Available Commands
 
-This package provides custom commands for managing Vectorize indexes, plus the standard Laravel Scout commands:
+This package provides custom commands for managing Vectorize indexes and metadata indexes, plus the standard Laravel Scout commands:
 
 ### Vectorize Index Management
 
@@ -531,6 +562,33 @@ php artisan vectorize:drop-index my-index --force
 **Options for `vectorize:drop-index`:**
 - `name` (optional): Index name (uses config value if not provided)
 - `--force`: Skip confirmation prompts
+
+### Metadata Index Management
+
+```bash
+# Create a metadata index for filtering
+php artisan vectorize:create-metadata-index property-name type --index-name=my-index
+
+# List all metadata indexes
+php artisan vectorize:list-metadata-indexes --index-name=my-index
+
+# Delete a metadata index
+php artisan vectorize:delete-metadata-index property-name --index-name=my-index
+
+# Force delete without confirmation
+php artisan vectorize:delete-metadata-index property-name --index-name=my-index --force
+```
+
+**Arguments for `vectorize:create-metadata-index`:**
+- `property-name`: The metadata property to index
+- `type`: Property type (string, number, boolean)
+
+**Arguments for `vectorize:delete-metadata-index`:**
+- `property-name`: The metadata property to delete
+
+**Options for metadata index commands:**
+- `--index-name`: Vectorize index name (uses config value if not provided)
+- `--force`: Skip confirmation prompts (delete command only)
 
 ### Standard Scout Commands
 
