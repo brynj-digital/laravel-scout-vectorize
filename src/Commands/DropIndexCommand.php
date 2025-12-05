@@ -60,7 +60,7 @@ class DropIndexCommand extends Command
         }
 
         try {
-            // Check if the index exists first
+            // Check if configuration exists
             $accountId = config('scout-vectorize.cloudflare.account_id');
             $apiToken = config('scout-vectorize.cloudflare.api_token');
 
@@ -69,8 +69,15 @@ class DropIndexCommand extends Command
                 return Command::FAILURE;
             }
 
+            // Create a VectorizeClient instance for the index we want to delete
+            $client = new VectorizeClient(
+                $accountId,
+                $apiToken,
+                $name
+            );
+
             $this->info("Checking if index '{$name}' exists...");
-            $indexExists = $this->checkIndexExists($accountId, $apiToken, $name);
+            $indexExists = $client->indexExists();
 
             if (!$indexExists) {
                 $this->error("Vectorize index '{$name}' does not exist.");
@@ -79,7 +86,7 @@ class DropIndexCommand extends Command
 
             $this->info("Deleting Vectorize index '{$name}'...");
 
-            $result = $this->deleteVectorizeIndex($accountId, $apiToken, $name);
+            $result = $client->deleteIndex();
 
             if (isset($result['success']) && $result['success']) {
                 $this->info("✅ Successfully deleted Vectorize index '{$name}'");
@@ -105,56 +112,5 @@ class DropIndexCommand extends Command
             $this->error("Error deleting Vectorize index: {$e->getMessage()}");
             return Command::FAILURE;
         }
-    }
-
-    /**
-     * Check if a Vectorize index exists via Cloudflare API.
-     */
-    protected function checkIndexExists(string $accountId, string $apiToken, string $name): bool
-    {
-        $client = new \GuzzleHttp\Client([
-            'timeout' => 30,
-            'connect_timeout' => 10,
-        ]);
-
-        $url = "https://api.cloudflare.com/client/v4/accounts/{$accountId}/vectorize/indexes/{$name}";
-
-        try {
-            $response = $client->get($url, [
-                'headers' => [
-                    'Authorization' => "Bearer {$apiToken}",
-                ],
-            ]);
-
-            $result = json_decode($response->getBody()->getContents(), true);
-            return isset($result['success']) && $result['success'];
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
-            if ($e->getResponse()->getStatusCode() === 404) {
-                return false; // Index doesn't exist
-            }
-            throw $e;
-        }
-    }
-
-    /**
-     * Delete a Vectorize index via Cloudflare API.
-     */
-    protected function deleteVectorizeIndex(string $accountId, string $apiToken, string $name): array
-    {
-        $client = new \GuzzleHttp\Client([
-            'timeout' => 30,
-            'connect_timeout' => 10,
-        ]);
-
-        $url = "https://api.cloudflare.com/client/v4/accounts/{$accountId}/vectorize/indexes/{$name}";
-
-        $response = $client->delete($url, [
-            'headers' => [
-                'Authorization' => "Bearer {$apiToken}",
-                'Content-Type' => 'application/json',
-            ],
-        ]);
-
-        return json_decode($response->getBody()->getContents(), true);
     }
 }

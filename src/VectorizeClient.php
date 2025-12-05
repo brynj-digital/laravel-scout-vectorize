@@ -240,4 +240,92 @@ class VectorizeClient
     {
         return $this->indexName;
     }
+
+    /**
+     * Delete the entire Vectorize index.
+     */
+    public function deleteIndex(): array
+    {
+        try {
+            $url = "https://api.cloudflare.com/client/v4/accounts/{$this->accountId}/vectorize/indexes/{$this->indexName}";
+
+            $response = $this->client->delete($url, [
+                'headers' => [
+                    'Authorization' => "Bearer {$this->apiToken}",
+                    'Content-Type' => 'application/json',
+                ],
+            ]);
+
+            $result = json_decode($response->getBody()->getContents(), true);
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Vectorize: Error deleting index', [
+                'error' => $e->getMessage(),
+                'index_name' => $this->indexName,
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Check if the index exists.
+     */
+    public function indexExists(): bool
+    {
+        try {
+            $url = "https://api.cloudflare.com/client/v4/accounts/{$this->accountId}/vectorize/indexes/{$this->indexName}";
+
+            $response = $this->client->get($url, [
+                'headers' => [
+                    'Authorization' => "Bearer {$this->apiToken}",
+                ],
+            ]);
+
+            $result = json_decode($response->getBody()->getContents(), true);
+            return isset($result['success']) && $result['success'];
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            if ($e->getResponse()->getStatusCode() === 404) {
+                return false; // Index doesn't exist
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * Create a new Vectorize index.
+     */
+    public static function createIndex(string $accountId, string $apiToken, string $name, int $dimensions, string $metric): array
+    {
+        $client = new Client([
+            'timeout' => 30,
+            'connect_timeout' => 10,
+        ]);
+
+        $url = "https://api.cloudflare.com/client/v4/accounts/{$accountId}/vectorize/indexes";
+
+        try {
+            $response = $client->post($url, [
+                'headers' => [
+                    'Authorization' => "Bearer {$apiToken}",
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => [
+                    'name' => $name,
+                    'dimensions' => $dimensions,
+                    'metric' => $metric,
+                ],
+            ]);
+
+            $result = json_decode($response->getBody()->getContents(), true);
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Vectorize: Error creating index', [
+                'error' => $e->getMessage(),
+                'index_name' => $name,
+                'dimensions' => $dimensions,
+                'metric' => $metric,
+            ]);
+            throw $e;
+        }
+    }
 }

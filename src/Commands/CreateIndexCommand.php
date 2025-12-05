@@ -70,8 +70,6 @@ class CreateIndexCommand extends Command
         }
 
         try {
-            // We'll need to make a direct API call since the current client doesn't have index creation
-            $client = app(VectorizeClient::class);
             $accountId = config('scout-vectorize.cloudflare.account_id');
             $apiToken = config('scout-vectorize.cloudflare.api_token');
 
@@ -80,7 +78,7 @@ class CreateIndexCommand extends Command
                 return Command::FAILURE;
             }
 
-            $result = $this->createVectorizeIndex($accountId, $apiToken, $name, $dimensions, $metric);
+            $result = VectorizeClient::createIndex($accountId, $apiToken, $name, $dimensions, $metric);
 
             if (isset($result['success']) && $result['success']) {
                 $this->info("✅ Successfully created Vectorize index '{$name}'");
@@ -106,33 +104,6 @@ class CreateIndexCommand extends Command
             $this->error("Error creating Vectorize index: {$e->getMessage()}");
             return Command::FAILURE;
         }
-    }
-
-    /**
-     * Create a Vectorize index via Cloudflare API.
-     */
-    protected function createVectorizeIndex(string $accountId, string $apiToken, string $name, int $dimensions, string $metric): array
-    {
-        $client = new \GuzzleHttp\Client([
-            'timeout' => 30,
-            'connect_timeout' => 10,
-        ]);
-
-        $url = "https://api.cloudflare.com/client/v4/accounts/{$accountId}/vectorize/indexes";
-
-        $response = $client->post($url, [
-            'headers' => [
-                'Authorization' => "Bearer {$apiToken}",
-                'Content-Type' => 'application/json',
-            ],
-            'json' => [
-                'name' => $name,
-                'dimensions' => $dimensions,
-                'metric' => $metric,
-            ],
-        ]);
-
-        return json_decode($response->getBody()->getContents(), true);
     }
 
     /**
