@@ -326,4 +326,98 @@ class VectorizeClient
             throw $e;
         }
     }
+
+    /**
+     * Create a metadata index on a specific property.
+     */
+    public function createMetadataIndex(string $propertyName, string $type, ?string $indexName = null): array
+    {
+        try {
+            $targetIndex = $indexName ?? $this->indexName;
+            $url = "{$this->baseUrl}/{$targetIndex}/metadata_index/create";
+
+            $payload = [
+                'property_name' => $propertyName,
+                'type' => $type,
+            ];
+
+            $response = $this->client->post($url, [
+                'headers' => [
+                    'Authorization' => "Bearer {$this->apiToken}",
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => $payload,
+            ]);
+
+            $result = json_decode($response->getBody()->getContents(), true);
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Vectorize: Error creating metadata index', [
+                'error' => $e->getMessage(),
+                'property_name' => $propertyName,
+                'type' => $type,
+                'index_name' => $indexName ?? $this->indexName,
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Delete a metadata index.
+     */
+    public function deleteMetadataIndex(string $propertyName, ?string $indexName = null): array
+    {
+        try {
+            $targetIndex = $indexName ?? $this->indexName;
+            $url = "{$this->baseUrl}/{$targetIndex}/metadata_index/delete";
+
+            $payload = [
+                'property_name' => $propertyName,
+            ];
+
+            $response = $this->client->post($url, [
+                'headers' => [
+                    'Authorization' => "Bearer {$this->apiToken}",
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => $payload,
+            ]);
+
+            $result = json_decode($response->getBody()->getContents(), true);
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Vectorize: Error deleting metadata index', [
+                'error' => $e->getMessage(),
+                'property_name' => $propertyName,
+                'index_name' => $indexName ?? $this->indexName,
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * List all metadata indexes for an index.
+     */
+    public function listMetadataIndexes(?string $indexName = null): array
+    {
+        try {
+            $targetIndex = $indexName ?? $this->indexName;
+            $url = "{$this->baseUrl}/{$targetIndex}/metadata_index/list";
+
+            $response = $this->client->get($url, [
+                'headers' => [
+                    'Authorization' => "Bearer {$this->apiToken}",
+                ],
+            ]);
+
+            $result = json_decode($response->getBody()->getContents(), true);
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Vectorize: Error listing metadata indexes', [
+                'error' => $e->getMessage(),
+                'index_name' => $indexName ?? $this->indexName,
+            ]);
+            throw $e;
+        }
+    }
 }

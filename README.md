@@ -37,10 +37,18 @@ php artisan vendor:publish --tag=scout-vectorize-config
 
 ### 1. Create a Vectorize Index
 
-Create a Vectorize index in your Cloudflare dashboard or via the API:
+Use the provided artisan command to create a Vectorize index:
 
 ```bash
-# Using Wrangler CLI
+# Recommended: Using artisan command
+php artisan vectorize:create-index my-index
+
+# Or with custom dimensions and metric
+php artisan vectorize:create-index my-index --dimensions=1024 --metric=euclidean --embedding-model=@cf/baai/bge-large-en-v1.5
+```
+
+**Alternative**: Using Wrangler CLI
+```bash
 npx wrangler vectorize create my-index --dimensions=768 --metric=cosine
 ```
 
@@ -49,13 +57,13 @@ The dimensions must match your chosen embedding model:
 - `@cf/baai/bge-base-en-v1.5`: 768 dimensions (default)
 - `@cf/baai/bge-large-en-v1.5`: 1024 dimensions
 
-### Create Metadata Indexes
+### 2. Create Metadata Indexes
 
-Create metadata indexes to enable efficient filtering. The `model` index is **required** for the driver to function correctly:
+Create metadata indexes to enable efficient filtering using the artisan commands:
 
 ```bash
 # Required: Create metadata index for model filtering
-npx wrangler vectorize create-metadata-index my-index --property-name=model --type=string
+php artisan vectorize:create-metadata-index model string --index-name=my-index
 ```
 
 **Note**: Recent versions of this package no longer require a `key` metadata index, as model keys are now extracted directly from the vector ID format. This provides cleaner metadata and reduced storage requirements.
@@ -66,13 +74,36 @@ You can create additional metadata indexes for any custom fields you want to fil
 
 ```bash
 # Example: Create index for filtering by status
-npx wrangler vectorize create-metadata-index my-index --property-name=status --type=string
+php artisan vectorize:create-metadata-index status string --index-name=my-index
 
 # Example: Create index for filtering by category_id
-npx wrangler vectorize create-metadata-index my-index --property-name=category_id --type=number
+php artisan vectorize:create-metadata-index category_id number --index-name=my-index
 
 # Example: Create index for boolean fields
+php artisan vectorize:create-metadata-index in_stock boolean --index-name=my-index
+```
+
+**Alternative**: Using Wrangler CLI
+```bash
+# Required: Create metadata index for model filtering
+npx wrangler vectorize create-metadata-index my-index --property-name=model --type=string
+
+# Optional: Additional metadata indexes
+npx wrangler vectorize create-metadata-index my-index --property-name=status --type=string
+npx wrangler vectorize create-metadata-index my-index --property-name=category_id --type=number
 npx wrangler vectorize create-metadata-index my-index --property-name=in_stock --type=boolean
+```
+
+#### Managing Metadata Indexes
+
+Use the provided commands to manage your metadata indexes:
+
+```bash
+# List all metadata indexes for an index
+php artisan vectorize:list-metadata-indexes --index-name=my-index
+
+# Delete a metadata index
+php artisan vectorize:delete-metadata-index status --index-name=my-index
 ```
 
 To use these filters, include the fields in your model's `toSearchableArray()`:
