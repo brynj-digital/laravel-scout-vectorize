@@ -4,6 +4,9 @@ All notable changes to `laravel-scout-vectorize` will be documented in this file
 
 ## [Unreleased]
 
+### Changed
+- Laravel 13 support
+
 ### Added
 - Initial release
 - Cloudflare Vectorize driver for Laravel Scout
