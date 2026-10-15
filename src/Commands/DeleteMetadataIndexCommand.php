@@ -59,13 +59,11 @@ class DeleteMetadataIndexCommand extends Command
             $existingIndexesResult = $client->listMetadataIndexes($indexName);
 
             if (isset($existingIndexesResult['success']) && $existingIndexesResult['success']) {
-                $existingIndexes = isset($existingIndexesResult['result']['metadata_indexes'])
-                    ? $existingIndexesResult['result']['metadata_indexes']
-                    : [];
+                $existingIndexes = VectorizeClient::metadataIndexesFrom($existingIndexesResult);
                 $targetIndex = null;
 
                 foreach ($existingIndexes as $index) {
-                    if ((isset($index['property_name']) ? $index['property_name'] : '') === $propertyName) {
+                    if ($index['property_name'] === $propertyName) {
                         $targetIndex = $index;
                         break;
                     }
@@ -78,9 +76,8 @@ class DeleteMetadataIndexCommand extends Command
                 }
 
                 $this->info("Found metadata index:");
-                $this->line("  Property: " . (isset($targetIndex['property_name']) ? $targetIndex['property_name'] : 'Unknown'));
-                $this->line("  Type: " . (isset($targetIndex['type']) ? $targetIndex['type'] : 'Unknown'));
-                $this->line("  Created: " . (isset($targetIndex['created_at']) ? $targetIndex['created_at'] : 'Unknown'));
+                $this->line("  Property: {$targetIndex['property_name']}");
+                $this->line("  Type: {$targetIndex['type']}");
             } else {
                 $this->error('Failed to check existing metadata indexes');
                 return Command::FAILURE;

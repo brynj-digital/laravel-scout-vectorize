@@ -15,9 +15,10 @@ class VectorizeClient
         protected string $accountId,
         protected string $apiToken,
         protected string $indexName,
-        protected string $embeddingModel = '@cf/baai/bge-base-en-v1.5'
+        protected string $embeddingModel = '@cf/baai/bge-base-en-v1.5',
+        ?Client $client = null
     ) {
-        $this->client = new Client([
+        $this->client = $client ?? new Client([
             'timeout' => 30,
             'connect_timeout' => 10,
         ]);
@@ -60,11 +61,30 @@ class VectorizeClient
 
     /**
      * Insert vectors into Cloudflare Vectorize.
+     *
+     * Insert skips any vector whose ID is already in the index, so it cannot
+     * update a record that has changed. Use upsertVectors() for that.
      */
     public function insertVectors(array $vectors): array
     {
+        return $this->writeVectors('insert', $vectors);
+    }
+
+    /**
+     * Insert vectors into Cloudflare Vectorize, overwriting any with the same ID.
+     */
+    public function upsertVectors(array $vectors): array
+    {
+        return $this->writeVectors('upsert', $vectors);
+    }
+
+    /**
+     * Send vectors to the index's insert or upsert endpoint.
+     */
+    protected function writeVectors(string $operation, array $vectors): array
+    {
         try {
-            $response = $this->client->post("{$this->baseUrl}/{$this->indexName}/insert", [
+            $response = $this->client->post("{$this->baseUrl}/{$this->indexName}/{$operation}", [
                 'headers' => [
                     'Authorization' => "Bearer {$this->apiToken}",
                     'Content-Type' => 'application/json',
@@ -77,7 +97,7 @@ class VectorizeClient
             $result = json_decode($response->getBody()->getContents(), true);
             return $result;
         } catch (\Exception $e) {
-            Log::error('Vectorize: Error inserting vectors', [
+            Log::error("Vectorize: Error writing vectors ({$operation})", [
                 'error' => $e->getMessage(),
                 'count' => count($vectors),
             ]);
@@ -98,7 +118,7 @@ class VectorizeClient
             'metadata' => array_merge($metadata, ['text' => $text]),
         ];
 
-        return $this->insertVectors([$vector]);
+        return $this->upsertVectors([$vector]);
     }
 
     /**
@@ -117,7 +137,7 @@ class VectorizeClient
             ];
         }
 
-        return $this->insertVectors($vectors);
+        return $this->upsertVectors($vectors);
     }
 
     /**
@@ -419,5 +439,22 @@ class VectorizeClient
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * Pull the metadata indexes out of a listMetadataIndexes() response.
+     *
+     * Cloudflare returns result.metadataIndexes with propertyName and indexType.
+     * Each entry comes back as ['property_name' => ..., 'type' => ...]; the
+     * snake_case keys are accepted too.
+     */
+    public static function metadataIndexesFrom(array $result): array
+    {
+        $indexes = $result['result']['metadataIndexes'] ?? $result['result']['metadata_indexes'] ?? [];
+
+        return array_map(fn (array $index) => [
+            'property_name' => $index['propertyName'] ?? $index['property_name'] ?? 'Unknown',
+            'type' => $index['indexType'] ?? $index['type'] ?? 'Unknown',
+        ], $indexes);
     }
 }

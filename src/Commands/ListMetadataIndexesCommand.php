@@ -53,9 +53,7 @@ class ListMetadataIndexesCommand extends Command
             $result = $client->listMetadataIndexes($indexName);
 
             if (isset($result['success']) && $result['success']) {
-                $metadataIndexes = isset($result['result']['metadata_indexes'])
-                    ? $result['result']['metadata_indexes']
-                    : [];
+                $metadataIndexes = VectorizeClient::metadataIndexesFrom($result);
 
                 if (empty($metadataIndexes)) {
                     $this->info("✅ No metadata indexes found for '{$indexName}'");
@@ -67,21 +65,7 @@ class ListMetadataIndexesCommand extends Command
 
                 $this->info("✅ Found " . count($metadataIndexes) . " metadata index(es):");
 
-                $tableData = [];
-                foreach ($metadataIndexes as $index) {
-                    $tableData[] = [
-                        'property' => isset($index['property_name']) ? $index['property_name'] : 'Unknown',
-                        'type' => isset($index['type']) ? $index['type'] : 'Unknown',
-                        'created' => isset($index['created_at'])
-                            ? date('Y-m-d H:i:s', strtotime($index['created_at']))
-                            : 'Unknown',
-                    ];
-                }
-
-                $this->table(
-                    ['Property', 'Type', 'Created At'],
-                    $tableData
-                );
+                $this->table(['Property', 'Type'], $metadataIndexes);
 
                 $this->line('');
                 $this->info('Total metadata indexes: ' . count($metadataIndexes) . '/10');

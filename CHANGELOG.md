@@ -4,6 +4,10 @@ All notable changes to `laravel-scout-vectorize` will be documented in this file
 
 ## [Unreleased]
 
+### Fixed
+- `batchUpsert()` and `upsertDocument()` now write through Vectorize's `/upsert` endpoint. `/insert` skips IDs that already exist, so re-indexing a changed model left its old vector in place
+- The list, create and delete metadata index commands read Cloudflare's `metadataIndexes`, `propertyName` and `indexType` fields, so they see the indexes that exist
+
 ### Changed
 - Laravel 13 support
 

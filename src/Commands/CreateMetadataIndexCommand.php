@@ -72,9 +72,7 @@ class CreateMetadataIndexCommand extends Command
             $existingIndexesResult = $client->listMetadataIndexes($indexName);
 
             if (isset($existingIndexesResult['success']) && $existingIndexesResult['success']) {
-                $existingIndexes = isset($existingIndexesResult['result']['metadata_indexes'])
-                    ? $existingIndexesResult['result']['metadata_indexes']
-                    : [];
+                $existingIndexes = VectorizeClient::metadataIndexesFrom($existingIndexesResult);
 
                 // Check for 10-property limit
                 if (count($existingIndexes) >= 10) {
