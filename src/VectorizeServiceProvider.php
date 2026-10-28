@@ -55,8 +55,8 @@ class VectorizeServiceProvider extends ServiceProvider
         }
 
         // Extend Scout with Vectorize engine
-        resolve(EngineManager::class)->extend('vectorize', function () {
-            return new VectorizeEngine($this->app->make(VectorizeClient::class));
+        resolve(EngineManager::class)->extend('vectorize', function ($app) {
+            return new VectorizeEngine($app->make(VectorizeClient::class));
         });
     }
 }
